@@ -146,10 +146,15 @@ System.register(['extend', 'aurelia-logging', 'jwt-decode', 'aurelia-pal', 'aure
           this.popupWindow = null;
           this.polling = null;
           this.url = '';
+          this.redirectHash = null;
         }
 
         Popup.prototype.open = function open(url, windowName, options) {
+          var redirectHash = arguments.length <= 3 || arguments[3] === undefined ? null : arguments[3];
+
           this.url = url;
+          this.redirectHash = redirectHash;
+
           var optionsString = buildPopupWindowOptions(options || {});
 
           this.popupWindow = PLATFORM.global.open(url, windowName, optionsString);
@@ -204,7 +209,8 @@ System.register(['extend', 'aurelia-logging', 'jwt-decode', 'aurelia-pal', 'aure
               var errorData = void 0;
 
               try {
-                if (_this2.popupWindow.location.host === DOM.location.host && (_this2.popupWindow.location.search || _this2.popupWindow.location.hash)) {
+                if ((_this2.popupWindow.location.hash === _this2.redirectHash || _this2.popupWindow.location.host === DOM.location.host) && (_this2.popupWindow.location.search || _this2.popupWindow.location.hash)) {
+
                   var qs = parseUrl(_this2.popupWindow.location);
 
                   if (qs.error) {
@@ -309,6 +315,7 @@ System.register(['extend', 'aurelia-logging', 'jwt-decode', 'aurelia-pal', 'aure
               url: '/auth/facebook',
               authorizationEndpoint: 'https://www.facebook.com/v2.5/dialog/oauth',
               redirectUri: PLATFORM.location.origin + '/',
+              redirectHash: '#_=_',
               requiredUrlParams: ['display', 'scope'],
               scope: ['email'],
               scopeDelimiter: ',',
@@ -712,7 +719,7 @@ System.register(['extend', 'aurelia-logging', 'jwt-decode', 'aurelia-pal', 'aure
           }
 
           var url = provider.authorizationEndpoint + '?' + buildQueryString(this.buildQuery(provider));
-          var popup = this.popup.open(url, provider.name, provider.popupOptions);
+          var popup = this.popup.open(url, provider.name, provider.popupOptions, provider.redirectHash);
           var openPopup = this.config.platform === 'mobile' ? popup.eventListener(provider.redirectUri) : popup.pollPopup();
 
           return openPopup.then(function (oauthData) {

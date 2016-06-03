@@ -1,7 +1,7 @@
 declare module 'aurelia-authentication' {
   export class Popup {
     constructor();
-    open(url?: any, windowName?: any, options?: any): any;
+    open(url?: any, windowName?: any, options?: any, redirectHash?: any): any;
     eventListener(redirectUri?: any): any;
     pollPopup(): any;
   }

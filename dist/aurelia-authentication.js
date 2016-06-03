@@ -11,13 +11,16 @@ import {Config,Rest} from 'aurelia-api';
 
 export class Popup {
   constructor() {
-    this.popupWindow = null;
-    this.polling     = null;
-    this.url         = '';
+    this.popupWindow  = null;
+    this.polling      = null;
+    this.url          = '';
+    this.redirectHash = null;
   }
 
-  open(url, windowName, options) {
+  open(url, windowName, options, redirectHash = null) {
     this.url = url;
+    this.redirectHash = redirectHash;
+
     const optionsString = buildPopupWindowOptions(options || {});
 
     this.popupWindow = PLATFORM.global.open(url, windowName, optionsString);
@@ -68,8 +71,11 @@ export class Popup {
         let errorData;
 
         try {
-          if (this.popupWindow.location.host ===  DOM.location.host
-            && (this.popupWindow.location.search || this.popupWindow.location.hash)) {
+          if ((this.popupWindow.location.hash === this.redirectHash
+            || this.popupWindow.location.host === DOM.location.host)
+          && (this.popupWindow.location.search
+            || this.popupWindow.location.hash)) {
+
             const qs = parseUrl(this.popupWindow.location);
 
             if (qs.error) {
@@ -271,6 +277,7 @@ export class BaseConfig {
       url: '/auth/facebook',
       authorizationEndpoint: 'https://www.facebook.com/v2.5/dialog/oauth',
       redirectUri: PLATFORM.location.origin + '/',
+      redirectHash: '#_=_',
       requiredUrlParams: ['display', 'scope'],
       scope: ['email'],
       scopeDelimiter: ',',
@@ -639,7 +646,7 @@ export class OAuth2 {
 
     const url       = provider.authorizationEndpoint
                     + '?' + buildQueryString(this.buildQuery(provider));
-    const popup     = this.popup.open(url, provider.name, provider.popupOptions);
+    const popup     = this.popup.open(url, provider.name, provider.popupOptions, provider.redirectHash);
     const openPopup = (this.config.platform === 'mobile')
                     ? popup.eventListener(provider.redirectUri)
                     : popup.pollPopup();

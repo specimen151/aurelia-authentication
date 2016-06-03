@@ -81,10 +81,15 @@ var Popup = exports.Popup = function () {
     this.popupWindow = null;
     this.polling = null;
     this.url = '';
+    this.redirectHash = null;
   }
 
   Popup.prototype.open = function open(url, windowName, options) {
+    var redirectHash = arguments.length <= 3 || arguments[3] === undefined ? null : arguments[3];
+
     this.url = url;
+    this.redirectHash = redirectHash;
+
     var optionsString = buildPopupWindowOptions(options || {});
 
     this.popupWindow = _aureliaPal.PLATFORM.global.open(url, windowName, optionsString);
@@ -139,7 +144,8 @@ var Popup = exports.Popup = function () {
         var errorData = void 0;
 
         try {
-          if (_this2.popupWindow.location.host === _aureliaPal.DOM.location.host && (_this2.popupWindow.location.search || _this2.popupWindow.location.hash)) {
+          if ((_this2.popupWindow.location.hash === _this2.redirectHash || _this2.popupWindow.location.host === _aureliaPal.DOM.location.host) && (_this2.popupWindow.location.search || _this2.popupWindow.location.hash)) {
+
             var qs = parseUrl(_this2.popupWindow.location);
 
             if (qs.error) {
@@ -242,6 +248,7 @@ var BaseConfig = exports.BaseConfig = function () {
         url: '/auth/facebook',
         authorizationEndpoint: 'https://www.facebook.com/v2.5/dialog/oauth',
         redirectUri: _aureliaPal.PLATFORM.location.origin + '/',
+        redirectHash: '#_=_',
         requiredUrlParams: ['display', 'scope'],
         scope: ['email'],
         scopeDelimiter: ',',
@@ -639,7 +646,7 @@ var OAuth2 = exports.OAuth2 = (_dec4 = (0, _aureliaDependencyInjection.inject)(S
     }
 
     var url = provider.authorizationEndpoint + '?' + (0, _aureliaPath.buildQueryString)(this.buildQuery(provider));
-    var popup = this.popup.open(url, provider.name, provider.popupOptions);
+    var popup = this.popup.open(url, provider.name, provider.popupOptions, provider.redirectHash);
     var openPopup = this.config.platform === 'mobile' ? popup.eventListener(provider.redirectUri) : popup.pollPopup();
 
     return openPopup.then(function (oauthData) {

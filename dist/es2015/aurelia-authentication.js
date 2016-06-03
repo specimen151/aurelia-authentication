@@ -45,10 +45,13 @@ export let Popup = class Popup {
     this.popupWindow = null;
     this.polling = null;
     this.url = '';
+    this.redirectHash = null;
   }
 
-  open(url, windowName, options) {
+  open(url, windowName, options, redirectHash = null) {
     this.url = url;
+    this.redirectHash = redirectHash;
+
     const optionsString = buildPopupWindowOptions(options || {});
 
     this.popupWindow = PLATFORM.global.open(url, windowName, optionsString);
@@ -99,7 +102,8 @@ export let Popup = class Popup {
         let errorData;
 
         try {
-          if (this.popupWindow.location.host === DOM.location.host && (this.popupWindow.location.search || this.popupWindow.location.hash)) {
+          if ((this.popupWindow.location.hash === this.redirectHash || this.popupWindow.location.host === DOM.location.host) && (this.popupWindow.location.search || this.popupWindow.location.hash)) {
+
             const qs = parseUrl(this.popupWindow.location);
 
             if (qs.error) {
@@ -196,6 +200,7 @@ export let BaseConfig = class BaseConfig {
         url: '/auth/facebook',
         authorizationEndpoint: 'https://www.facebook.com/v2.5/dialog/oauth',
         redirectUri: PLATFORM.location.origin + '/',
+        redirectHash: '#_=_',
         requiredUrlParams: ['display', 'scope'],
         scope: ['email'],
         scopeDelimiter: ',',
@@ -564,7 +569,7 @@ export let OAuth2 = (_dec4 = inject(Storage, Popup, BaseConfig), _dec4(_class5 =
     }
 
     const url = provider.authorizationEndpoint + '?' + buildQueryString(this.buildQuery(provider));
-    const popup = this.popup.open(url, provider.name, provider.popupOptions);
+    const popup = this.popup.open(url, provider.name, provider.popupOptions, provider.redirectHash);
     const openPopup = this.config.platform === 'mobile' ? popup.eventListener(provider.redirectUri) : popup.pollPopup();
 
     return openPopup.then(oauthData => {
